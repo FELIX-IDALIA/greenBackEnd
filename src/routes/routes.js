@@ -4,9 +4,9 @@ const signIn = require("../controllers/SignIn");
 const signUp = require("../controllers/SignUp");
 
 // sign In
-router.post("/signin", signIn);
+router.post("/SignIn", signIn);
 
 // sign Up
-router.post("/signup", signUp);
+router.post("/SignUp", signUp);
 
 module.exports = router;
