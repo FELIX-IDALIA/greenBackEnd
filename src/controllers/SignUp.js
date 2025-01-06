@@ -1,4 +1,4 @@
-const UserPersonalData = require('../models/userPersonalData');
+const User = require('../models/User');
 const argon2 = require("argon2");
 
 const SignUp = async (req, res) => {
@@ -8,10 +8,10 @@ const SignUp = async (req, res) => {
         // Hash the password using Argon2
         req.body.password = await argon2.hash(req.body.password);
 
-        const userData = new UserPersonalData(req.body);
-        console.log("UserPersonalData to save:", userData); // Debug: created instance
+        const user = new User(req.body);
+        console.log("UserPersonalData to save:", user); // Debug: created instance
 
-        await userData.save();
+        await user.save();
 
         return res.status(201).json({
             message: "Account created successfully!"

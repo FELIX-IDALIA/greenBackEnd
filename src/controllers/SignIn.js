@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
-const User = require("../models/userPersonalData");
+const User = require("../models/User");
 const argon2 = require("argon2");
 
 // Load environment variables
