@@ -22,7 +22,7 @@ app.use(cors({
 */}
 app.use(cors());
 app.use(express.json());
-app.use("/api/user", useRoutes);
+app.use("/Account", useRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
