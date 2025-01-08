@@ -2,8 +2,17 @@ const connectDB = require('./src/database/Database');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const express = require('express');
-const app = express();
+
+const http = require("http");
+const { Server } = require("socket.io");
+
 const useRoutes = require("./src/routes/routes");
+const streamRoutes = require("./src/routes/streamRoutes");
+const streamSocket = require("./src/sockets/streamSocket");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
 // Load env vars first
 dotenv.config();
@@ -15,14 +24,13 @@ if (!process.env.PASS_WD) {
 }
 
 // Middleware
-{/*
-app.use(cors({
-    origin: "http://localhost:5173"
-}));
-*/}
 app.use(cors());
 app.use(express.json());
 app.use("/Account", useRoutes);
+app.use("/api", streamRoutes);
+
+// Socket.io integration
+streamSocket(io);
 
 // Basic route for testing
 app.get('/', (req, res) => {
