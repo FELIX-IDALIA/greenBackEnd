@@ -1,18 +1,19 @@
+//const NodeMediaServer = require("node-media-server");
 const connectDB = require('./src/database/Database');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const express = require('express');
 
-const http = require("http");
-const { Server } = require("socket.io");
+// Import the nms instance instead of requiring the module
+require("./src/utils/streamHelper");
 
 const useRoutes = require("./src/routes/routes");
 const streamRoutes = require("./src/routes/streamRoutes");
-const streamSocket = require("./src/sockets/streamSocket");
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+
+// Home routes
+const profileRoute = require("./src/routes/profileRoute");
 
 // Load env vars first
 dotenv.config();
@@ -27,14 +28,12 @@ if (!process.env.PASS_WD) {
 app.use(cors());
 app.use(express.json());
 app.use("/Account", useRoutes);
-app.use("/api", streamRoutes);
-
-// Socket.io integration
-streamSocket(io);
+app.use("/home", profileRoute); 
+app.use("/", streamRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
-    res.send('Server is running');
+    res.send('Server is running...');
 });
 
 // Connect to database and start server
