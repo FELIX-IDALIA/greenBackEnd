@@ -1,58 +1,64 @@
 const Stream = require("../../models/Stream");
-const User = require("../../models/User");
+const crypto = require("crypto");
+const { validateStream } = require("../../utils/validators");
 
 exports.createStream = async (req, res) => {
     try {
-        const { userId, title, description, tags } = req.body;
 
-        // Verify user exists
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ error: "User not found"})
+        const { error } = validateStream(req.body);
+        if (error) {
+            return res.status(400).json({ error: error.details[0].message});
         }
 
-        // Check if user already has an active stream
-        const activeStream = await Stream.findOne({
-            user: userId,
-            isLive: true
-        });
-
-        if (activeStream) {
-            return res.status(400).json({ error: "User already has an active stream"});
-        }
+        const { title, description, tags } = req.body;
+        const streamKey = crypto.randomBytes(20).toString("hex");
 
         const stream = new Stream({
-            user: userId,
+            user: req.userId,
             title,
             description,
             tags,
-            isLive: true
+            streamKey,
+            status: "pending"
         });
 
         await stream.save();
-        await stream.populate("user", "username email");
 
-        res.status(201).json(await stream.getStreamInfo());
-
+        res.status(201).json({
+            stream: await stream.populate("user", "username email"),
+            rtmpUrl: `rtmp://${process.env.STREAM_SERVER}/live`,
+            streamKey
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Stream creation error:", error);
+        res.status(500).json({ error: "Failed to create stream" });
     }
 };
 
-// Get active streams
-exports.getActiveStreams = async (req, res) => {
+exports.startStream = async (req, res) => {
     try {
-        const streams = await Stream.find({ isLive: true })
-            .populate("user", "username email")
-            .sort("-startTime");
-        
-        const streamInfo = await Promise.all(
-            streams.map(stream => stream.getStreamInfo())
-        );
+        const stream = await Stream.findById(req.params.id);
 
-        res.json(streamInfo);
+        if (!stream) {
+            return res.status(404).json({ error: "Stream not found" });
+        }
 
+        if (stream.user.toString() !== req.userId.toString()) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+
+        if (stream.isLive) {
+            return res.status(400).json({ error: "Stream is already live"});
+        }
+
+        stream.isLive = true;
+        stream.status = "live";
+        stream.startTime = new Date();
+        await stream.save();
+
+        res.json({ message: "Stream started successfully", stream});
     } catch (error) {
-        res.status(500).json( { error: error.message });
+        console.error("Start stream error:", error);
+        res.status(500).json({ error: "Failed to start stream" });
     }
 };

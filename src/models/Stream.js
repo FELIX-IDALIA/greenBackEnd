@@ -9,38 +9,39 @@ const streamSchema = new mongoose.Schema({
     }, 
     title: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     }, 
+    description: {
+        type: String,
+        trim: true
+    }, 
+    streamKey: {
+        type: String,
+        unique: true,
+        required: true
+    },
     isLive: {
         type: Boolean,
         default: false
-    }, 
-    startTime: {
-        type: Data,
-        default: Date.now
     },
-    endTime: {
-        type: Date
-    },
-    viewers: {
+    startTime: Date,
+    endTime: Date,
+    viewerCount: {
         type: Number,
         default: 0
-    }, 
-    description: String,
-    tags: [String]
-}, { timestamps: true });
-
-// Add methods to the Stream schema
-streamSchema.methods.getStreamInfo = async function() {
-    await this.populate("user", "username email");
-    return {
-        id: this._id,
-        title: this.title,
-        streamer: this.user.username,
-        isLive: this.isLive,
-        viewers: this.viewers
-    };
-};
+    },
+    tags:[String],
+    thumbnails: String,
+    status: {
+        type: String,
+        enum: ["pending", "live", "ended", "error"],
+        default: "pending"
+    }
+}, { 
+    timestamps: true,
+    toJSON: { virtuals: true }
+});
 
 const Stream = mongoose.model("Stream", streamSchema);
 
